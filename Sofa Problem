@@ -1,0 +1,110 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Node {
+    int r, c, d, s;
+};
+
+int main() {
+    int m, n;
+    cin >> m >> n;
+
+    vector<string> a(m);
+    for (int i = 0; i < m; i++)
+        cin >> a[i];
+
+    vector<pair<int,int>> st, en;
+
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; j < n; j++) {
+            if (a[i][j] == 's')
+                st.push_back({i, j});
+            if (a[i][j] == 'S')
+                en.push_back({i, j});
+        }
+    }
+
+    int sr = min(st[0].first, st[1].first);
+    int sc = min(st[0].second, st[1].second);
+    int er = min(en[0].first, en[1].first);
+    int ec = min(en[0].second, en[1].second);
+
+    int sd = (st[0].first == st[1].first) ? 0 : 1;
+    int ed = (en[0].first == en[1].first) ? 0 : 1;
+
+    vector<vector<vector<int>>> vis(
+        m, vector<vector<int>>(n, vector<int>(2, 0))
+    );
+
+    queue<Node> q;
+    q.push({sr, sc, sd, 0});
+    vis[sr][sc][sd] = 1;
+
+    int dr[] = {-1, 1, 0, 0};
+    int dc[] = {0, 0, -1, 1};
+
+    auto freeCell = [&](int r, int c) {
+        return r >= 0 && r < m && c >= 0 && c < n && a[r][c] != 'H';
+    };
+
+    auto canMove = [&](int r, int c, int d) {
+        if (d == 0)
+            return freeCell(r, c) && freeCell(r, c + 1);
+        else
+            return freeCell(r, c) && freeCell(r + 1, c);
+    };
+
+    auto canRotate = [&](int r, int c) {
+        for (int i = r; i < r + 2; i++)
+            for (int j = c; j < c + 2; j++)
+                if (!freeCell(i, j))
+                    return false;
+        return true;
+    };
+
+    while (!q.empty()) {
+        Node cur = q.front();
+        q.pop();
+
+        if (cur.r == er && cur.c == ec && cur.d == ed) {
+            cout << cur.s;
+            return 0;
+        }
+
+        for (int k = 0; k < 4; k++) {
+            int nr = cur.r + dr[k];
+            int nc = cur.c + dc[k];
+
+            if (canMove(nr, nc, cur.d) && !vis[nr][nc][cur.d]) {
+                vis[nr][nc][cur.d] = 1;
+                q.push({nr, nc, cur.d, cur.s + 1});
+            }
+        }
+
+        if (cur.d == 0) {
+            if (cur.r + 1 < m && canRotate(cur.r, cur.c)) {
+                int nr = cur.r;
+                int nc = cur.c;
+                int nd = 1;
+
+                if (!vis[nr][nc][nd]) {
+                    vis[nr][nc][nd] = 1;
+                    q.push({nr, nc, nd, cur.s + 1});
+                }
+            }
+        } else {
+            if (cur.c + 1 < n && canRotate(cur.r, cur.c)) {
+                int nr = cur.r;
+                int nc = cur.c;
+                int nd = 0;
+
+                if (!vis[nr][nc][nd]) {
+                    vis[nr][nc][nd] = 1;
+                    q.push({nr, nc, nd, cur.s + 1});
+                }
+            }
+        }
+    }
+
+    cout << "Impossible";
+}
